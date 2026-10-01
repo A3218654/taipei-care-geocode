@@ -1,6 +1,6 @@
 # 把同資料夾內 CSV 的「定位用地址」轉成經緯度（WGS84），寫回「經度」「緯度」欄
 # 主要用 ArcGIS World Geocoder（免金鑰）；查不到時改用 OpenStreetMap Nominatim
-import csv, glob, time, requests
+import csv, glob, re, time, requests
 
 ARC = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates"
 OSM = "https://nominatim.openstreetmap.org/search"
@@ -27,6 +27,15 @@ def osm(addr):
             f'OSM:{j[0].get("type","")}', j[0].get("display_name", ""))
 
 def geocode(addr):
+    res = _geocode(addr)
+    base = re.sub(r"之\d+號$", "號", addr)
+    if base != addr and not res[2].startswith("ArcGIS:PointAddress"):
+        res2 = _geocode(base)
+        if res2[2].startswith("ArcGIS:PointAddress"):
+            return res2[:2] + (res2[2] + "-主門牌",) + res2[3:]
+    return res
+
+def _geocode(addr):
     if addr not in cache:
         res = None
         for fn in (arcgis, osm):
