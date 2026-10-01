@@ -48,7 +48,12 @@ for f in sorted(glob.glob("*.csv")):
     for extra in ("定位精度", "比對結果地址"):
         if extra not in fields:
             fields.append(extra)
+    if all(r.get("經度") for r in rows):
+        print("已完成，略過：", f)
+        continue
     for r in rows:
+        if r.get("經度"):
+            continue
         x, y, t, m = geocode(r["定位用地址"])
         r["經度"], r["緯度"], r["定位精度"], r["比對結果地址"] = x, y, t, m
         print(r["定位用地址"], x, y, t)
